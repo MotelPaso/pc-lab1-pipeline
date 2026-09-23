@@ -10,10 +10,10 @@ class Sistema:
         cuadrado = lambda x : x**2
         return (cuadrado(pos1[0] - pos2[0]) + cuadrado(pos1[1] - pos2[1]))**0.5
 
-    def calcular_intervalo(frame1:int, frame2:int, FPS=16) -> float:
+    def calcular_intervalo(frame1:int, frame2:int, FPS=25) -> float:
         '''
         Calcula el intervalo entre datos registrados mediante frames,
-        con un valor default de 16 FPS.
+        con un valor default de 25 FPS.
         '''
         return (frame2 - frame1) / FPS
 

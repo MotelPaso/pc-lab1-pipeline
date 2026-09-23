@@ -2,14 +2,15 @@
 
 class Observacion:
 
-    def __init__(self, posX: float, posY: float, frame: int):
+    def __init__(self, id:int, posX: float, posY: float, frame: int):
+        self.id = id
         self.posicion = (posX, posY)
         self.frame = frame
 
 class Peaton:
 
-    def __init__(self):
-        pass
+    def __init__(self, id:int):
+        self.id = id
 
     def set_pos_inicial(self):
         pass
