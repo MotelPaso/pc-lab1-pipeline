@@ -1,20 +1,30 @@
 # pc-lab1-pipeline
 
-### Requisitos
+Pipeline para el laboratorio 1 de Programación Cientifica.
 
-python >=3.14 
-uv
+## Requisitos
 
+- **Python** `>= 3.14`
+- **uv** (gestor de entornos y dependencias)
 
+## Cómo correrlo
 
-### oye asi se corre
+Primero, clonar el repositorio y preparar el entorno:
 
-Primero, se debe activar el entorno virtual
+```bash
+git clone git@github.com:MotelPaso/pc-lab1-pipeline.git
+cd pc-lab1-pipeline
 
-git clone "este repositorio"
-cd "este repositorio"
-uv init
-source .venv/bin/activate
+uv init            # crear el proyecto con uv
+source .venv/bin/activate   # activar el entorno virtual
+```
 
+Luego, para ejecutar el pipeline:
+
+```bash
 python3 main.py --input ./input.txt --output ./output.txt
+```
 
+### Modo interactivo
+
+Si se omiten los parámetros `--input` o `--output`, el programa los pedirá por consola.
