@@ -1,30 +1,29 @@
-# pc-lab1-pipeline
+# Análisis de Trayectorias Peatonales
 
-Pipeline para el laboratorio 1 de Programación Cientifica.
+Los argumentos permiten configurar el programa desde la terminal sin editar el código fuente. `--input` y `--output` tienen valores predeterminados y pueden cambiarse al ejecutar el programa.
 
-## Requisitos
-
-- **Python** `>= 3.14`
-- **uv** (gestor de entornos y dependencias)
-
-## Cómo correrlo
-
-Primero, clonar el repositorio y preparar el entorno:
+## Ejecución básica
 
 ```bash
-git clone git@github.com:MotelPaso/pc-lab1-pipeline.git
-cd pc-lab1-pipeline
-
-uv init            # crear el proyecto con uv
-source .venv/bin/activate   # activar el entorno virtual
+python3 main.py
 ```
 
-Luego, para ejecutar el pipeline:
+## Ejecución con parámetros
 
 ```bash
-python3 main.py --input ./input.txt --output ./output.txt
+python3 main.py --input ./data --output ./results
 ```
 
-### Modo interactivo
+## Especificar frecuencia
 
-Si se omiten los parámetros `--input` o `--output`, el programa los pedirá por consola.
+```bash
+python3 main.py --input ./data --output ./results --fps 25
+```
+
+## Mostrar ayuda
+
+```bash
+python3 main.py --help
+```
+
+Los comandos también pueden ejecutarse con `python` cuando corresponda.
