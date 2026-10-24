@@ -1,29 +1,32 @@
-# Análisis de Trayectorias Peatonales
+# pc-lab1-pipeline
 
-Los argumentos permiten configurar el programa desde la terminal sin editar el código fuente. `--input` y `--output` tienen valores predeterminados y pueden cambiarse al ejecutar el programa.
+Pipeline para el laboratorio 1 de Programación Cientifica.
 
-## Ejecución básica
+## Requisitos
+
+- **Python** `>= 3.14`
+
+## Cómo correrlo
+
+Primero, clonar el repositorio:
 
 ```bash
-python3 main.py
+git clone git@github.com:MotelPaso/pc-lab1-pipeline.git
+cd pc-lab1-pipeline
+
 ```
 
-## Ejecución con parámetros
+Luego, para ejecutar el pipeline:
 
 ```bash
 python3 main.py --input ./data --output ./results
 ```
 
-## Especificar frecuencia
+Como input, se toma la ruta de la carpeta de los datos.
+Como output, se toma la ruta de la carpeta de salida.
+
+Tambien se puede especificar la frecuencia de muestreo:
 
 ```bash
 python3 main.py --input ./data --output ./results --fps 25
 ```
-
-## Mostrar ayuda
-
-```bash
-python3 main.py --help
-```
-
-Los comandos también pueden ejecutarse con `python` cuando corresponda.
