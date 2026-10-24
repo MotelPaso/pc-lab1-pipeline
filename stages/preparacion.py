@@ -15,6 +15,13 @@ class PreparacionTrayectorias(EtapaPipeline[list[Experimento], list[Experimento]
         experimentos: list[Experimento],
         contexto: ContextoPipeline,
     ) -> list[Experimento]:
+
+        for exp in experimentos:
+            exp.trayectorias = self._reconstruir_trayectorias(
+                self._organizar_observaciones(
+                self._validar_observaciones(exp.observaciones)))
+
+        return exp
         """Prepara las observaciones y trayectorias de cada experimento."""
         raise NotImplementedError("Etapa pendiente de implementación")
 
@@ -22,19 +29,31 @@ class PreparacionTrayectorias(EtapaPipeline[list[Experimento], list[Experimento]
         self,
         observaciones: list[Observacion],
     ) -> list[Observacion]:
-        """Valida y retorna las observaciones de un experimento."""
-        raise NotImplementedError
+        # TODO: pregutar q se hace aqui
+        return observaciones
+
 
     def _organizar_observaciones(
         self,
         observaciones: list[Observacion],
     ) -> dict[int, list[Observacion]]:
-        """Organiza las observaciones por identificador de peatón."""
-        raise NotImplementedError
+
+        ordenadas: dict[int, list[Observacion]] = {}
+
+        for observacion in observaciones:
+            if observacion.id_peaton not in ordenadas:
+                ordenadas[observacion.id_peaton] = []
+            ordenadas[observacion.id_peaton].append(observacion)
+
+        return ordenadas
 
     def _reconstruir_trayectorias(
         self,
         observaciones_organizadas: dict[int, list[Observacion]],
     ) -> list[Trayectoria]:
-        """Construye trayectorias desde las observaciones organizadas."""
-        raise NotImplementedError
+
+        trayectorias: list[Trayectoria] = []
+        for id_peaton, observaciones in observaciones_organizadas.items():
+            trayectorias.append(Trayectoria(id_peaton, observaciones))
+
+        return trayectorias
