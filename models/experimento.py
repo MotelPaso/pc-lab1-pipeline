@@ -11,6 +11,7 @@ class Experimento:
     """Representa un conjunto de observaciones y sus análisis."""
 
     nombre: str
+    fps: float
     observaciones: list[Observacion] = field(default_factory=list)
     trayectorias: list[Trayectoria] = field(default_factory=list)
     resultados_individuales: dict[int, dict[str, float]] = field(default_factory=dict)

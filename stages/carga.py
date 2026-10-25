@@ -18,8 +18,8 @@ class CargaExperimentos(EtapaPipeline[None, list[Experimento]]):
 
         return Observacion(int(p[0]), int(p[1]), float(p[2]), float(p[3]), float(p[4]))
 
-    def crear_experimento(self, nombre: str, observaciones: list[Observacion], trayectorias: list[Trayectoria] ) -> Experimento:
-        return Experimento(nombre, observaciones, trayectorias)
+    def crear_experimento(self, nombre: str, fps: float, observaciones: list[Observacion], trayectorias: list[Trayectoria]) -> Experimento:
+        return Experimento(nombre, fps, observaciones, trayectorias)
 
     def crear_trayectoria(self, id: int, observaciones: list[Observacion] ) -> Trayectoria:
         return Trayectoria(id, observaciones)
@@ -46,7 +46,7 @@ class CargaExperimentos(EtapaPipeline[None, list[Experimento]]):
 
             with archivo.open() as arch:
                 print("Archivo: ", nombre_experimento := arch.readline().split()[2])
-                print("FPS:     ", arch.readline().split()[2])
+                print("FPS:     ", fps := float(arch.readline().split()[2]))
                 arch.readline()
                 arch.readline()
 
@@ -67,6 +67,6 @@ class CargaExperimentos(EtapaPipeline[None, list[Experimento]]):
 
                 trayectorias.append(self.crear_trayectoria(id_actual, observaciones_peaton.copy()))
 
-            experimentos.append(self.crear_experimento(nombre_experimento, observaciones, trayectorias))
+            experimentos.append(self.crear_experimento(nombre_experimento, fps, observaciones, trayectorias))
 
         return experimentos
