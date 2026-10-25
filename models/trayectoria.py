@@ -39,3 +39,24 @@ class Trayectoria:
         if tiempo == 0:
             return 0
         return self.calcular_distancia_total()/tiempo
+    
+    def calcular_velocidad_maxima(self, fps: float) -> float:
+        """Calcula la mayor velocidad registrada entre dos observaciones consecutivas."""
+        maxima = 0
+        for i in range(len(self.observaciones) - 1):
+            primera = self.observaciones[i]
+            segunda = self.observaciones[i + 1]
+            tiempo = (segunda.frame - primera.frame)/fps
+            if tiempo > 0:
+                velocidad = self.distancia_entre(primera, segunda)/tiempo
+                if velocidad > maxima:
+                    maxima = velocidad
+        return maxima
+
+    def calcular_eficiencia(self) -> float:
+        """Calcula la eficiencia: desplazamiento / distancia total recorrida."""
+        distancia = self.calcular_distancia_total()
+        if distancia == 0:
+            return 0
+        eficiencia = self.calcular_desplazamiento()/distancia
+        return eficiencia
