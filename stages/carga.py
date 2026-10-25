@@ -40,7 +40,9 @@ class CargaExperimentos(EtapaPipeline[None, list[Experimento]]):
 
         experimentos: list[Experimento] = []
 
-        for archivo in ruta_entrada.iterdir():
+        for archivo in sorted(ruta_entrada.iterdir()):
+            if not archivo.is_file() or archivo.name.startswith("."):
+                continue
 
             with archivo.open() as arch:
                 print("Archivo: ", nombre_experimento := arch.readline().split()[2])
