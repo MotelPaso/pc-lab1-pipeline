@@ -32,4 +32,10 @@ class Trayectoria:
 
     def calcular_velocidad_media(self, fps: float) -> float:
         """Calcula la velocidad media usando la frecuencia del experimento."""
-        raise NotImplementedError
+        if len(self.observaciones) < 2:
+            return 0
+        frames = self.observaciones[-1].frame - self.observaciones[0].frame
+        tiempo = frames/fps
+        if tiempo == 0:
+            return 0
+        return self.calcular_distancia_total()/tiempo
