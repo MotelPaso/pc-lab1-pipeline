@@ -21,9 +21,7 @@ class PreparacionTrayectorias(EtapaPipeline[list[Experimento], list[Experimento]
                 self._organizar_observaciones(
                 self._validar_observaciones(exp.observaciones)))
 
-        return exp
-        """Prepara las observaciones y trayectorias de cada experimento."""
-        raise NotImplementedError("Etapa pendiente de implementación")
+        return experimentos
 
     def _validar_observaciones(
         self,
