@@ -55,7 +55,10 @@ class CargaExperimentos(EtapaPipeline[None, list[Experimento]]):
                 trayectorias: list[Trayectoria] = []
                 id_actual = 1
 
-                while (partes := arch.readline().strip().split()):
+                for linea in arch:
+                    partes = linea.split()
+                    if not partes:
+                        continue
                     if id_actual != int(partes[0]):
                         trayectorias.append(self.crear_trayectoria(id_actual, observaciones_peaton.copy()))
                         observaciones_peaton.clear()
