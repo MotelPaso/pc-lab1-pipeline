@@ -18,7 +18,13 @@ class CargaExperimentos(EtapaPipeline[None, list[Experimento]]):
 
         return Observacion(int(p[0]), int(p[1]), float(p[2]), float(p[3]), float(p[4]))
 
-    def crear_experimento(self, nombre: str, fps: float, observaciones: list[Observacion], trayectorias: list[Trayectoria]) -> Experimento:
+    def crear_experimento(
+        self,
+        nombre: str,
+        fps: float,
+        observaciones: list[Observacion],
+        trayectorias: list[Trayectoria],
+    ) -> Experimento:
         return Experimento(nombre, fps, observaciones, trayectorias)
 
     def ejecutar(
@@ -63,6 +69,8 @@ class CargaExperimentos(EtapaPipeline[None, list[Experimento]]):
                     print("Filas descartadas:", descartadas)
 
             # Las trayectorias se arman después, en PreparacionTrayectorias
-            experimentos.append(self.crear_experimento(nombre_experimento, fps, observaciones, []))
+            experimentos.append(
+                self.crear_experimento(nombre_experimento, fps, observaciones, [])
+            )
 
         return experimentos

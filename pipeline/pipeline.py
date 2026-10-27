@@ -13,7 +13,10 @@ class Pipeline:
         self._etapas = list(etapas)
 
     def ejecutar(self, contexto: ContextoPipeline) -> bool:
-        """Pasa cada resultado a la etapa siguiente y se detiene ante una etapa pendiente."""
+        """Pasa cada resultado a la etapa siguiente.
+
+        Se detiene ante la primera etapa pendiente de implementación.
+        """
         resultado: Any = None
         for etapa in self._etapas:
             nombre_etapa = type(etapa).__name__

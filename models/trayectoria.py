@@ -51,9 +51,9 @@ class Trayectoria:
         if tiempo == 0:
             return 0
         return self.calcular_distancia_total()/tiempo
-    
+
     def calcular_velocidad_maxima(self, fps: float) -> float:
-        """Calcula la mayor velocidad registrada entre dos observaciones consecutivas."""
+        """Calcula la mayor velocidad entre dos observaciones consecutivas."""
         pares = zip(self.observaciones, self.observaciones[1:])
         velocidades = (
             self.distancia_entre(a, b)/((b.frame - a.frame)/fps)

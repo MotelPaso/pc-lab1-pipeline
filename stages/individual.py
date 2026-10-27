@@ -12,10 +12,10 @@ class AnalisisIndividual(EtapaPipeline[list[Experimento], list[Experimento]]):
     """Coordina el análisis de múltiples trayectorias y reúne sus indicadores."""
 
     def __init__(
-            self,
-            umbral_velocidad: float = 0.1,
-            duracion_minima: float = 1.0,
-            ventana: float = 1.0,
+        self,
+        umbral_velocidad: float = 0.1,
+        duracion_minima: float = 1.0,
+        ventana: float = 1.0,
     ) -> None:
         """Define el criterio de detención.
 
@@ -52,7 +52,7 @@ class AnalisisIndividual(EtapaPipeline[list[Experimento], list[Experimento]]):
         x_final, y_final = trayectoria.posicion_final()
         tiempo_total = trayectoria.calcular_tiempo_total(fps)
         detenciones = self._detectar_detenciones(trayectoria, fps)
-        tiempo_detenido = sum((fin-inicio) / fps for inicio, fin in detenciones)
+        tiempo_detenido = sum((fin - inicio) / fps for inicio, fin in detenciones)
         porcentaje = 100 * tiempo_detenido / tiempo_total if tiempo_total > 0 else 0
         return {
             "x_inicial": x_inicial,
