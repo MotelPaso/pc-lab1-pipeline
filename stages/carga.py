@@ -21,9 +21,6 @@ class CargaExperimentos(EtapaPipeline[None, list[Experimento]]):
     def crear_experimento(self, nombre: str, fps: float, observaciones: list[Observacion], trayectorias: list[Trayectoria]) -> Experimento:
         return Experimento(nombre, fps, observaciones, trayectorias)
 
-    def crear_trayectoria(self, id: int, observaciones: list[Observacion] ) -> Trayectoria:
-        return Trayectoria(id, observaciones)
-
     def ejecutar(
         self,
         entrada: None,
@@ -51,25 +48,14 @@ class CargaExperimentos(EtapaPipeline[None, list[Experimento]]):
                 arch.readline()
 
                 observaciones: list[Observacion] = []
-                observaciones_peaton: list[Observacion] = []
-                trayectorias: list[Trayectoria] = []
-                id_actual = 1
 
                 for linea in arch:
                     partes = linea.split()
                     if not partes:
                         continue
-                    if id_actual != int(partes[0]):
-                        trayectorias.append(self.crear_trayectoria(id_actual, observaciones_peaton.copy()))
-                        observaciones_peaton.clear()
-                        id_actual = int(partes[0])
+                    observaciones.append(self.crear_observacion(partes))
 
-                    observacion: Observacion = self.crear_observacion(partes)
-                    observaciones.append(observacion)
-                    observaciones_peaton.append(observacion)
-
-                trayectorias.append(self.crear_trayectoria(id_actual, observaciones_peaton.copy()))
-
-            experimentos.append(self.crear_experimento(nombre_experimento, fps, observaciones, trayectorias))
+            # Las trayectorias se arman después, en PreparacionTrayectorias
+            experimentos.append(self.crear_experimento(nombre_experimento, fps, observaciones, []))
 
         return experimentos
