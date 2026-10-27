@@ -43,7 +43,10 @@ class PreparacionTrayectorias(EtapaPipeline[list[Experimento], list[Experimento]
                 ordenadas[observacion.id_peaton] = []
             ordenadas[observacion.id_peaton].append(observacion)
 
-        return ordenadas
+        return {
+            id_peaton: sorted(observaciones_peaton, key=lambda o: o.frame)
+            for id_peaton, observaciones_peaton in ordenadas.items()
+        }
 
     def _reconstruir_trayectorias(
         self,
