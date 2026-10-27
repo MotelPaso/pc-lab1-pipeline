@@ -17,6 +17,23 @@ class Trayectoria:
         """Distancia euclidiana entre dos observaciones."""
         return sqrt((b.x - a.x)**2 + (b.y - a.y)**2)
 
+    def posicion_inicial(self) -> tuple[float, float]:
+        """Devuelve la posición (x, y) de la primera observación."""
+        primera = self.observaciones[0]
+        return (primera.x, primera.y)
+
+    def posicion_final(self) -> tuple[float, float]:
+        """Devuelve la posición (x, y) de la última observación."""
+        ultima = self.observaciones[-1]
+        return (ultima.x, ultima.y)
+
+    def calcular_tiempo_total(self, fps: float) -> float:
+        """Calcula el tiempo observado entre el primer y el último frame."""
+        if len(self.observaciones) < 2:
+            return 0
+        frames = self.observaciones[-1].frame - self.observaciones[0].frame
+        return frames/fps
+
     def calcular_distancia_total(self) -> float:
         """Calcula la distancia total recorrida por el peatón."""
         total = 0
@@ -32,10 +49,7 @@ class Trayectoria:
 
     def calcular_velocidad_media(self, fps: float) -> float:
         """Calcula la velocidad media usando la frecuencia del experimento."""
-        if len(self.observaciones) < 2:
-            return 0
-        frames = self.observaciones[-1].frame - self.observaciones[0].frame
-        tiempo = frames/fps
+        tiempo = self.calcular_tiempo_total(fps)
         if tiempo == 0:
             return 0
         return self.calcular_distancia_total()/tiempo
