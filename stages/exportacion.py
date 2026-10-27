@@ -36,9 +36,15 @@ class ExportacionResultados(EtapaPipeline[ResultadoAnalisis, None]):
             for experimento in resultados.experimentos
             for fila in experimento.serie_temporal
         ]
+        zonas = [
+            {"experimento": experimento.nombre, **fila}
+            for experimento in resultados.experimentos
+            for fila in experimento.resultados_zonas
+        ]
         self._escribir_csv(ruta_salida / "resultados_individuales.csv", individuales)
         self._escribir_csv(ruta_salida / "resultados_experimentos.csv", por_experimento)
         self._escribir_csv(ruta_salida / "series_tiempo.csv", series)
+        self._escribir_csv(ruta_salida / "resultados_zonas.csv", zonas)
 
     def _escribir_csv(self, ruta: Path, filas: list[dict[str, object]]) -> None:
         """Escribe una fila por diccionario, con una columna por cada clave."""

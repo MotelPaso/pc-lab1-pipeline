@@ -17,3 +17,4 @@ class Experimento:
     resultados_individuales: dict[int, dict[str, float]] = field(default_factory=dict)
     resultados_colectivos: dict[str, float] = field(default_factory=dict)
     serie_temporal: list[dict[str, float]] = field(default_factory=list)
+    resultados_zonas: list[dict[str, float]] = field(default_factory=list)

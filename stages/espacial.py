@@ -1,6 +1,7 @@
 """Etapa de análisis espacial, densidad y flujo."""
 
 from collections import Counter
+from math import floor
 from statistics import fmean
 
 from models.experimento import Experimento
@@ -18,17 +19,20 @@ class AnalisisEspacial(EtapaPipeline[list[Experimento], list[Experimento]]):
         area_x: tuple[float, float] = (-1.0, 1.0),
         area_y: tuple[float, float] = (0.0, 5.0),
         ventana_serie: float = 5.0,
+        ancho_zona: float = 1.0,
     ) -> None:
-        """Define la línea del flujo, el área de la densidad y las ventanas de tiempo.
+        """Define la línea del flujo, el área de densidad, las ventanas y las zonas.
 
         linea_x: posición x (m) de la línea transversal para el flujo.
         area_x, area_y: límites (m) del rectángulo donde se mide la densidad.
         ventana_serie: duración (s) de cada ventana de las series de tiempo.
+        ancho_zona: largo (m) de cada zona en que se divide el corredor a lo largo de x.
         """
         self.linea_x = linea_x
         self.area_x = area_x
         self.area_y = area_y
         self.ventana_serie = ventana_serie
+        self.ancho_zona = ancho_zona
 
     def ejecutar(
         self,
@@ -38,16 +42,45 @@ class AnalisisEspacial(EtapaPipeline[list[Experimento], list[Experimento]]):
         """Analiza las zonas, la densidad y el flujo de cada experimento."""
         for experimento in experimentos:
             fps = contexto.fps if contexto.fps is not None else experimento.fps
-            # TODO: agregar el análisis por zonas
             flujo = self._calcular_flujo(experimento, fps)
             densidad = self._calcular_densidad(experimento)
             experimento.resultados_colectivos.update(flujo)
             experimento.resultados_colectivos.update(densidad)
             experimento.serie_temporal = self._calcular_serie(experimento, fps)
+            experimento.resultados_zonas = self._analizar_zonas(experimento, fps)
         return experimentos
 
-    def _analizar_zonas(self, experimento: Experimento) -> dict[str, float]:
-        pass
+    def _analizar_zonas(
+        self,
+        experimento: Experimento,
+        fps: float,
+    ) -> list[dict[str, float]]:
+        """Calcula los peatones, la velocidad media y el tiempo medio de cada zona.
+
+        Las zonas son franjas de ancho_zona metros a lo largo de x. Un peatón
+        atraviesa una zona si tiene observaciones a ambos lados de ella. Su tiempo
+        en la zona es la cantidad de frames que pasa dentro dividida por fps, y su
+        velocidad, el ancho de la zona dividido por ese tiempo.
+        """
+        tiempos: dict[int, list[float]] = {}
+        for trayectoria in experimento.trayectorias:
+            zonas = [floor(o.x / self.ancho_zona) for o in trayectoria.observaciones]
+            if not zonas:
+                continue
+            primera, ultima = min(zonas), max(zonas)
+            for zona, frames in Counter(zonas).items():
+                if primera < zona < ultima:
+                    tiempos.setdefault(zona, []).append(frames / fps)
+        return [
+            {
+                "x_desde": zona * self.ancho_zona,
+                "x_hasta": (zona + 1) * self.ancho_zona,
+                "peatones": len(tiempos_zona),
+                "velocidad_media": fmean(self.ancho_zona / t for t in tiempos_zona),
+                "tiempo_medio": fmean(tiempos_zona),
+            }
+            for zona, tiempos_zona in sorted(tiempos.items())
+        ]
 
     def _calcular_densidad(self, experimento: Experimento) -> dict[str, float]:
         """Calcula la densidad ρ = N / A en el área de medición, frame a frame.
