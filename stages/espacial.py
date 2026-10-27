@@ -17,15 +17,18 @@ class AnalisisEspacial(EtapaPipeline[list[Experimento], list[Experimento]]):
         linea_x: float = 0.0,
         area_x: tuple[float, float] = (-1.0, 1.0),
         area_y: tuple[float, float] = (0.0, 5.0),
+        ventana_serie: float = 5.0,
     ) -> None:
-        """Define la línea del flujo y el área donde se mide la densidad.
+        """Define la línea del flujo, el área de la densidad y las ventanas de tiempo.
 
         linea_x: posición x (m) de la línea transversal para el flujo.
         area_x, area_y: límites (m) del rectángulo donde se mide la densidad.
+        ventana_serie: duración (s) de cada ventana de las series de tiempo.
         """
         self.linea_x = linea_x
         self.area_x = area_x
         self.area_y = area_y
+        self.ventana_serie = ventana_serie
 
     def ejecutar(
         self,
@@ -40,6 +43,7 @@ class AnalisisEspacial(EtapaPipeline[list[Experimento], list[Experimento]]):
             densidad = self._calcular_densidad(experimento)
             experimento.resultados_colectivos.update(flujo)
             experimento.resultados_colectivos.update(densidad)
+            experimento.serie_temporal = self._calcular_serie(experimento, fps)
         return experimentos
 
     def _analizar_zonas(self, experimento: Experimento) -> dict[str, float]:
@@ -52,24 +56,59 @@ class AnalisisEspacial(EtapaPipeline[list[Experimento], list[Experimento]]):
         mismo período que el flujo: entre el primer y el último cruce de la línea.
         La densidad queda en personas por metro cuadrado.
         """
-        (x_min, x_max), (y_min, y_max) = self.area_x, self.area_y
-        area = (x_max - x_min) * (y_max - y_min)
         frames = self._cruces(experimento)
         if not frames:
             return {"densidad_media": 0, "densidad_maxima": 0}
-        inicio, fin = frames[0], frames[-1]
-        personas = Counter(
-            o.frame
-            for o in experimento.observaciones
-            if inicio <= o.frame <= fin
-            and x_min <= o.x < x_max
-            and y_min <= o.y < y_max
-        )
-        densidades = [personas[frame] / area for frame in range(inicio, fin + 1)]
+        personas = self._personas_en_area(experimento)
+        area = self._area()
+        densidades = [personas[f] / area for f in range(frames[0], frames[-1] + 1)]
         return {
             "densidad_media": fmean(densidades),
             "densidad_maxima": max(densidades),
         }
+
+    def _calcular_serie(
+        self,
+        experimento: Experimento,
+        fps: float,
+    ) -> list[dict[str, float]]:
+        """Calcula la densidad y el flujo en ventanas de tiempo consecutivas.
+
+        Cubre el experimento completo, desde su primer hasta su último frame. Cada
+        fila tiene el inicio de la ventana (s), la densidad media (personas/m²) y
+        el flujo (personas/s) de esa ventana.
+        """
+        if not experimento.observaciones:
+            return []
+        frames = [o.frame for o in experimento.observaciones]
+        inicio, fin = min(frames), max(frames)
+        largo = max(1, round(self.ventana_serie * fps))
+        personas = self._personas_en_area(experimento)
+        cruces = Counter((f - inicio) // largo for f in self._cruces(experimento))
+        area = self._area()
+        serie: list[dict[str, float]] = []
+        for numero, desde in enumerate(range(inicio, fin + 1, largo)):
+            ventana = range(desde, min(desde + largo, fin + 1))
+            serie.append({
+                "tiempo_inicio": desde / fps,
+                "densidad": fmean(personas[f] / area for f in ventana),
+                "flujo": cruces[numero] / (len(ventana) / fps),
+            })
+        return serie
+
+    def _personas_en_area(self, experimento: Experimento) -> Counter[int]:
+        """Cuenta, para cada frame, cuántos peatones hay dentro del área de medición."""
+        (x_min, x_max), (y_min, y_max) = self.area_x, self.area_y
+        return Counter(
+            o.frame
+            for o in experimento.observaciones
+            if x_min <= o.x < x_max and y_min <= o.y < y_max
+        )
+
+    def _area(self) -> float:
+        """Calcula la superficie del área de medición, en metros cuadrados."""
+        (x_min, x_max), (y_min, y_max) = self.area_x, self.area_y
+        return (x_max - x_min) * (y_max - y_min)
 
     def _calcular_flujo(
         self,
