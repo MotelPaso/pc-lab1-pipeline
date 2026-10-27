@@ -48,12 +48,19 @@ class CargaExperimentos(EtapaPipeline[None, list[Experimento]]):
                 arch.readline()
 
                 observaciones: list[Observacion] = []
+                descartadas = 0
 
                 for linea in arch:
                     partes = linea.split()
                     if not partes:
                         continue
-                    observaciones.append(self.crear_observacion(partes))
+                    try:
+                        observaciones.append(self.crear_observacion(partes))
+                    except (ValueError, IndexError):
+                        descartadas += 1
+
+                if descartadas:
+                    print("Filas descartadas:", descartadas)
 
             # Las trayectorias se arman después, en PreparacionTrayectorias
             experimentos.append(self.crear_experimento(nombre_experimento, fps, observaciones, []))
