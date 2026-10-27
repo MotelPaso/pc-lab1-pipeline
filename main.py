@@ -7,7 +7,7 @@ from typing import Sequence
 from pipeline.contexto import ContextoPipeline
 from pipeline.pipeline import Pipeline
 from stages import (
-
+    AnalisisEspacial,
     AnalisisIndividual,
     CargaExperimentos,
     ComparacionExperimentos,
@@ -54,7 +54,7 @@ def main(argumentos: Sequence[str] | None = None) -> int:
         CargaExperimentos(),
         PreparacionTrayectorias(),
         AnalisisIndividual(),
-        #...
+        AnalisisEspacial(),
         ComparacionExperimentos(),
         ExportacionResultados(),
     ]
