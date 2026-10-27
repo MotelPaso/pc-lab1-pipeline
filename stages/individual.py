@@ -1,6 +1,7 @@
 """Etapa de análisis individual de los experimentos."""
 
 from itertools import groupby
+from math import fsum
 
 from models.experimento import Experimento
 from models.trayectoria import Trayectoria
@@ -52,7 +53,7 @@ class AnalisisIndividual(EtapaPipeline[list[Experimento], list[Experimento]]):
         x_final, y_final = trayectoria.posicion_final()
         tiempo_total = trayectoria.calcular_tiempo_total(fps)
         detenciones = self._detectar_detenciones(trayectoria, fps)
-        tiempo_detenido = sum((fin - inicio) / fps for inicio, fin in detenciones)
+        tiempo_detenido = fsum((fin - inicio) / fps for inicio, fin in detenciones)
         porcentaje = 100 * tiempo_detenido / tiempo_total if tiempo_total > 0 else 0
         return {
             "x_inicial": x_inicial,
