@@ -105,11 +105,13 @@ class AnalisisEspacial(EtapaPipeline[list[Experimento], list[Experimento]]):
         experimento: Experimento,
         fps: float,
     ) -> list[dict[str, float]]:
-        """Calcula la densidad y el flujo en ventanas de tiempo consecutivas.
+        """Calcula la densidad, la velocidad y el flujo en ventanas de tiempo.
 
         Cubre el experimento completo, desde su primer hasta su último frame. Cada
-        fila tiene el inicio de la ventana (s), la densidad media (personas/m²) y
-        el flujo (personas/s) de esa ventana.
+        fila tiene el inicio de la ventana (s), la densidad media (personas/m²), la
+        velocidad media (m/s) de los peatones dentro del área y el flujo
+        (personas/s) de esa ventana. Si no hay peatones en el área durante la
+        ventana, la velocidad queda en 0.
         """
         if not experimento.observaciones:
             return []
@@ -117,14 +119,19 @@ class AnalisisEspacial(EtapaPipeline[list[Experimento], list[Experimento]]):
         inicio, fin = min(frames), max(frames)
         largo = max(1, round(self.ventana_serie * fps))
         personas = self._personas_en_area(experimento)
+        velocidades = self._velocidades_en_area(experimento, fps)
         cruces = Counter((f - inicio) // largo for f in self._cruces(experimento))
         area = self._area()
         serie: list[dict[str, float]] = []
         for numero, desde in enumerate(range(inicio, fin + 1, largo)):
             ventana = range(desde, min(desde + largo, fin + 1))
+            velocidades_ventana = [v for f in ventana for v in velocidades.get(f, [])]
             serie.append({
                 "tiempo_inicio": desde / fps,
                 "densidad": fmean(personas[f] / area for f in ventana),
+                "velocidad_media": (
+                    fmean(velocidades_ventana) if velocidades_ventana else 0
+                ),
                 "flujo": cruces[numero] / (len(ventana) / fps),
             })
         return serie
@@ -137,6 +144,32 @@ class AnalisisEspacial(EtapaPipeline[list[Experimento], list[Experimento]]):
             for o in experimento.observaciones
             if x_min <= o.x < x_max and y_min <= o.y < y_max
         )
+
+    def _velocidades_en_area(
+        self,
+        experimento: Experimento,
+        fps: float,
+    ) -> dict[int, list[float]]:
+        """Reúne, para cada frame, las velocidades de los peatones dentro del área.
+
+        La velocidad de una observación es la distancia desde la observación anterior
+        del mismo peatón dividida por el tiempo entre ambas. La primera observación
+        de cada peatón no tiene velocidad.
+        """
+        (x_min, x_max), (y_min, y_max) = self.area_x, self.area_y
+        velocidades: dict[int, list[float]] = {}
+        for trayectoria in experimento.trayectorias:
+            observaciones = trayectoria.observaciones
+            for i in range(len(observaciones) - 1):
+                a = observaciones[i]
+                b = observaciones[i + 1]
+                if b.frame <= a.frame:
+                    continue
+                if x_min <= b.x < x_max and y_min <= b.y < y_max:
+                    tiempo = (b.frame - a.frame) / fps
+                    velocidad = trayectoria.distancia_entre(a, b) / tiempo
+                    velocidades.setdefault(b.frame, []).append(velocidad)
+        return velocidades
 
     def _area(self) -> float:
         """Calcula la superficie del área de medición, en metros cuadrados."""
