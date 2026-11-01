@@ -21,6 +21,7 @@ from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
 from matplotlib.typing import ColorType
 
+from models.experimento import Experimento
 from pipeline.contexto import ContextoPipeline
 from stages import AnalisisEspacial, CargaExperimentos, PreparacionTrayectorias
 
@@ -467,75 +468,43 @@ def graficar_diagrama_fundamental(
     return figura
 
 
-def graficar_trayectorias(
-    experimentos: list[Fila],
-    zonas: dict[str, list[Fila]],
-    sentidos: dict[str, int],
+def dibujar_trayectorias(
+    eje: Axes,
+    experimento: Experimento,
+    limites: list[float],
     espacial: AnalisisEspacial,
-    contexto: ContextoPipeline,
-) -> Figure:
-    """Dibuja las trayectorias de los experimentos de menor y mayor densidad media.
-
-    Carga los datos originales con las mismas etapas del pipeline y marca el
-    área donde se mide la densidad, la línea donde se cuenta el flujo y los
-    límites de las zonas.
-    """
-    ordenados = sorted(experimentos, key=lambda fila: float(fila["densidad_media"]))
-    elegidos = {fila["experimento"]: fila for fila in (ordenados[0], ordenados[-1])}
-    cargados = CargaExperimentos().ejecutar(None, contexto)
-    preparados = PreparacionTrayectorias().ejecutar(
-        [experimento for experimento in cargados if experimento.nombre in elegidos],
-        contexto,
-    )
-    limites = sorted(
-        {
-            x
-            for filas in zonas.values()
-            for campo in ("x_desde", "x_hasta")
-            for x in columna(filas, campo)
-        }
-    )
+) -> None:
+    """Dibuja las trayectorias y las referencias espaciales en un eje."""
     (x_min, x_max), (y_min, y_max) = espacial.area_x, espacial.area_y
+    segmentos = [
+        [(o.x, o.y) for o in trayectoria.observaciones]
+        for trayectoria in experimento.trayectorias
+    ]
+    eje.add_collection(
+        LineCollection(segmentos, colors=AZUL, linewidths=0.35, alpha=0.35)
+    )
+    for x in limites:
+        eje.axvline(x, color=GRIS, linewidth=0.6, zorder=0)
+    eje.add_patch(
+        Rectangle(
+            (x_min, y_min),
+            x_max - x_min,
+            y_max - y_min,
+            fill=False,
+            edgecolor=TINTA,
+            linewidth=1.1,
+            zorder=3,
+        )
+    )
+    eje.axvline(espacial.linea_x, color=ROJO, linewidth=1.3, zorder=4)
+    # Antes de matplotlib 3.11, add_collection no ajustaba la vista a los datos
+    eje.autoscale_view()
+    eje.set_aspect("equal")
+    eje.grid(False)
 
-    figura = Figure(figsize=(ANCHO, 6.0), layout="constrained")
-    ejes = figura.subplots(
-        len(preparados), 1, sharex=True, sharey=True, squeeze=False
-    )[:, 0]
-    for eje, experimento in zip(ejes, preparados):
-        segmentos = [
-            [(o.x, o.y) for o in trayectoria.observaciones]
-            for trayectoria in experimento.trayectorias
-        ]
-        eje.add_collection(
-            LineCollection(segmentos, colors=AZUL, linewidths=0.35, alpha=0.35)
-        )
-        for x in limites:
-            eje.axvline(x, color=GRIS, linewidth=0.6, zorder=0)
-        eje.add_patch(
-            Rectangle(
-                (x_min, y_min),
-                x_max - x_min,
-                y_max - y_min,
-                fill=False,
-                edgecolor=TINTA,
-                linewidth=1.1,
-                zorder=3,
-            )
-        )
-        eje.axvline(espacial.linea_x, color=ROJO, linewidth=1.3, zorder=4)
-        # Antes de matplotlib 3.11, add_collection no ajustaba la vista a los datos
-        eje.autoscale_view()
-        densidad = float(elegidos[experimento.nombre]["densidad_media"])
-        flecha = "→" if sentidos[experimento.nombre] > 0 else "←"
-        eje.set_title(
-            f"Experimento {numero(experimento.nombre)} · "
-            f"{len(experimento.trayectorias)} peatones · "
-            f"densidad media {densidad:.2f} personas/m² · sentido de marcha {flecha}"
-        )
-        eje.set_aspect("equal")
-        eje.grid(False)
-        eje.set_ylabel("y (m)")
-    ejes[-1].set_xlabel("x (m)")
+
+def leyenda_trayectorias(figura: Figure) -> None:
+    """Agrega la leyenda común de los gráficos de trayectorias."""
     figura.legend(
         handles=[
             Line2D([], [], color=AZUL, linewidth=1, label="Trayectoria de un peatón"),
@@ -551,6 +520,98 @@ def graficar_trayectorias(
         loc="outside lower center",
         ncols=4,
     )
+
+
+def limites_de_zonas(zonas: dict[str, list[Fila]]) -> list[float]:
+    """Devuelve las posiciones x donde empieza o termina una zona."""
+    return sorted(
+        {
+            x
+            for filas in zonas.values()
+            for campo in ("x_desde", "x_hasta")
+            for x in columna(filas, campo)
+        }
+    )
+
+
+def graficar_trayectorias(
+    experimentos: list[Fila],
+    zonas: dict[str, list[Fila]],
+    sentidos: dict[str, int],
+    espacial: AnalisisEspacial,
+    preparados: list[Experimento],
+) -> Figure:
+    """Dibuja las trayectorias de los experimentos de menor y mayor densidad media.
+
+    Marca el área donde se mide la densidad, la línea donde se cuenta el flujo y
+    los límites de las zonas.
+    """
+    ordenados = sorted(experimentos, key=lambda fila: float(fila["densidad_media"]))
+    elegidos = {fila["experimento"]: fila for fila in (ordenados[0], ordenados[-1])}
+    seleccionados = [
+        experimento for experimento in preparados if experimento.nombre in elegidos
+    ]
+    limites = limites_de_zonas(zonas)
+
+    figura = Figure(figsize=(ANCHO, 6.0), layout="constrained")
+    ejes = figura.subplots(
+        len(seleccionados), 1, sharex=True, sharey=True, squeeze=False
+    )[:, 0]
+    for eje, experimento in zip(ejes, seleccionados):
+        dibujar_trayectorias(eje, experimento, limites, espacial)
+        densidad = float(elegidos[experimento.nombre]["densidad_media"])
+        flecha = "→" if sentidos[experimento.nombre] > 0 else "←"
+        eje.set_title(
+            f"Experimento {numero(experimento.nombre)} · "
+            f"{len(experimento.trayectorias)} peatones · "
+            f"densidad media {densidad:.2f} personas/m² · sentido de marcha {flecha}"
+        )
+        eje.set_ylabel("y (m)")
+    ejes[-1].set_xlabel("x (m)")
+    leyenda_trayectorias(figura)
+    return figura
+
+
+def graficar_trayectorias_generales(
+    experimentos: list[Fila],
+    zonas: dict[str, list[Fila]],
+    sentidos: dict[str, int],
+    espacial: AnalisisEspacial,
+    preparados: list[Experimento],
+) -> Figure:
+    """Dibuja las trayectorias de todos los experimentos, uno por panel.
+
+    Usa el mismo estilo y las mismas referencias espaciales que el gráfico de
+    trayectorias, en una grilla de tres columnas.
+    """
+    densidades = {
+        fila["experimento"]: float(fila["densidad_media"]) for fila in experimentos
+    }
+    limites = limites_de_zonas(zonas)
+    columnas = 3
+    filas_paneles = ceil(len(preparados) / columnas)
+    figura = Figure(figsize=(ANCHO, 1.35 * filas_paneles + 0.8), layout="constrained")
+    ejes = list(
+        figura.subplots(
+            filas_paneles, columnas, sharex=True, sharey=True, squeeze=False
+        ).flat
+    )
+    for indice, (eje, experimento) in enumerate(zip(ejes, preparados)):
+        dibujar_trayectorias(eje, experimento, limites, espacial)
+        flecha = "→" if sentidos[experimento.nombre] > 0 else "←"
+        eje.set_title(
+            f"Exp. {numero(experimento.nombre)} · "
+            f"{len(experimento.trayectorias)} peatones\n"
+            f"{densidades[experimento.nombre]:.2f} personas/m² · marcha {flecha}",
+            fontsize=7,
+        )
+        if indice % columnas == 0:
+            eje.set_ylabel("y (m)")
+        if indice >= (filas_paneles - 1) * columnas:
+            eje.set_xlabel("x (m)")
+    for eje in ejes[len(preparados):]:
+        eje.set_visible(False)
+    leyenda_trayectorias(figura)
     return figura
 
 
@@ -597,8 +658,15 @@ def main(argumentos: Sequence[str] | None = None) -> int:
         contexto = ContextoPipeline(
             ruta_entrada=configuracion.datos, ruta_salida=configuracion.output
         )
+        cargados = CargaExperimentos().ejecutar(None, contexto)
+        preparados = PreparacionTrayectorias().ejecutar(cargados, contexto)
         graficos["trayectorias.png"] = lambda: graficar_trayectorias(
-            experimentos, zonas, sentidos, espacial, contexto
+            experimentos, zonas, sentidos, espacial, preparados
+        )
+        graficos["trayectorias_generales.png"] = (
+            lambda: graficar_trayectorias_generales(
+                experimentos, zonas, sentidos, espacial, preparados
+            )
         )
     else:
         print(

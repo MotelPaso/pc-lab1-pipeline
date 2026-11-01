@@ -50,6 +50,7 @@ Como input, se toma la carpeta con los CSV del pipeline; como output, la carpeta
 | Archivo | Contenido |
 | --- | --- |
 | `trayectorias.png` | Trayectorias de los experimentos de menor y mayor densidad, con el área de densidad, la línea de flujo y las zonas |
+| `trayectorias_generales.png` | Trayectorias de todos los experimentos, un panel por experimento, con las mismas referencias espaciales |
 | `distribuciones_individuales.png` | Velocidad, tiempo, distancia y eficiencia de cada peatón, por experimento |
 | `detenciones.png` | Porcentaje de peatones que se detienen y tiempo detenido promedio |
 | `velocidad_por_zona.png` | Velocidad de cada tramo respecto de la media del experimento, de la entrada a la salida |
